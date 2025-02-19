@@ -27,10 +27,69 @@ For example, `execSync(`echo "${input}" | ./c/process.sh`, {encoding: 'utf-8'});
 
 const fs = require('fs');
 const {execSync} = require('child_process');
-const path = require('path');
+// const path = require('path');
 
+
+// Helper: Run the text through process.sh and stem.js pipelines
+function runNormalizationPipeline(userInput) {
+  try {
+    const output = execSync(`echo "${userInput}" | ./c/process.sh | ./c/stem.js`, {
+      encoding: 'utf-8',
+    }).trim();
+    return output;
+  } catch (error) {
+    console.error('Error processing query:', error.message);
+    process.exit(1);
+  }
+}
+
+// Helper: Read the global index file contents
+function readIndexFileContents(filePath) {
+  try {
+    return fs.readFileSync(filePath, 'utf-8');
+  } catch (error) {
+    console.error('Error reading the global index file:', error.message);
+    process.exit(1);
+  }
+}
+
+// Helper: Find lines in the global index that include the processed query string
+function filterIndexLines(inputLines, pattern) {
+  return inputLines.filter((line) => line.includes(pattern));
+}
+
+// Helper: Print the matching lines or a no-match message
+function printMatches(originalInput, results) {
+  if (results.length > 0) {
+    results.forEach((line) => console.log(line));
+  } else {
+    console.log(`No matches found for query: "${originalInput}"`);
+  }
+}
 
 function query(indexFile, args) {
+  // 1. Combine user arguments into one string
+  const combinedInput = args.join(' ');
+
+  // 2. Normalize the text (remove stopwords, stem it, etc.)
+  const normalizedQuery = runNormalizationPipeline(combinedInput);
+  if (!normalizedQuery) {
+    console.error('The query resulted in no valid terms after processing.');
+    process.exit(1);
+  }
+
+  // 3. Turn multiline output into a single space-separated pattern
+  const pattern = normalizedQuery.replace(/\r?\n/g, ' ');
+
+  // 4. Read and split the global index file
+  const fileContents = readIndexFileContents(indexFile);
+  const fileLines = fileContents.split('\n');
+
+  // 5. Filter lines that contain the processed pattern
+  const matchedResults = filterIndexLines(fileLines, pattern);
+
+  // 6. Print the matching lines (or note if no matches)
+  printMatches(combinedInput, matchedResults);
 }
 
 const args = process.argv.slice(2); // Get command-line arguments

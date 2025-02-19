@@ -3,7 +3,7 @@
   "version": "0.1.18",
   "description": "A library for building distributed systems.",
   "main": "distribution.js",
-  "useLibrary": true,
+  "useLibrary": false,
   "directories": {
     "test": "test"
   },
@@ -26,21 +26,40 @@
     "@brown-ds/distribution": "latest"
   },
   "report": {
-    "hours": 999,
-    "loc": 999,
+    "hours": 5,
+    "loc": 150,
     "dev": {
-      "cpu-no": 999,
-      "mem-gb": 999,
-      "ssd-gb": 999
+      "cpu-no": 24,
+      "mem-gb": 32,
+      "ssd-gb": 2048
     },
     "throughput": {
-      "dev": [],
-      "aws": []
+      "dev":[
+        "crawler: 1.13 pages/sec",
+        "indexer: 1.13 pages/sec",
+        "query: 47.85 queries/sec"
+      ],
+      "aws": [
+        "crawler: 0.52 pages/sec",
+        "indexer: 0.52 pages/sec",
+        "query: 20.75 queries/sec"
+      ]
     },
     "latency": {
-      "dev": [],
-      "aws": []
+      "dev": ["basic types: 0.02ms", 
+      "Object with function: 0.016ms",
+      " Complex nested structure: 0.037ms"
+    ],
+      "aws": ["basic types: 0.03ms", 
+      "Object with function: 0.020ms",
+      " Complex nested structure: 0.052ms"]
     },
-    "dloc": -99
+    "m2":{
+      "Total time for 1000 requests":"1335.19 ms",
+      "Average latency": "769.78 ms",
+      "Throughput": "748.95 requests per second"
+    },
+    "dloc": 150
+    
   }
 }

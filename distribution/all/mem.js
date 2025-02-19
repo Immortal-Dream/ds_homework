@@ -1,3 +1,6 @@
+const distribution = global.distribution;
+const util = distribution.util;
+
 
 function mem(config) {
   const context = {};

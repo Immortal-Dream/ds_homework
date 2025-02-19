@@ -1,0 +1,8 @@
+hello | http://example.com/page1 3
+hello world | http://example.com/page2 2
+world | http://example.com/page3 5
+test | http://example.com/page4 1
+test case | http://example.com/page5 4
+example | http://example.com/page6 2
+sample test | http://example.com/page7 3
+sample | http://example.com/page8 2

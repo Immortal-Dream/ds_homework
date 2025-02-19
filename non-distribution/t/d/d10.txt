@@ -1,0 +1,6 @@
+run
+jump
+box
+geese
+studi
+happi
