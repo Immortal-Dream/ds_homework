@@ -1,8 +1,10 @@
 /** @typedef {import("../types").Callback} Callback */
-const id = distribution.util.id;
+const groups = require("../local/groups");
+
+
 /**
  * NOTE: This Target is slightly different from local.all.Target
- * @typdef {Object} Target
+ * @typedef {Object} Target
  * @property {string} service
  * @property {string} method
  */
@@ -14,47 +16,52 @@ const id = distribution.util.id;
 function comm(config) {
   const context = {};
   context.gid = config.gid || 'all';
-  
+
   /**
    * @param {Array} message
    * @param {object} configuration
    * @param {Callback} callback
    */
   function send(message, configuration, callback) {
-    let targetNodes = [];
+    callback = callback || function () { };
 
-    // add nodes to targetNodes
-    
-    targetNodes.push(configuration.node);
+    const group = groups.get(context.gid, (error, value) => console.log(value));
+    targetNodes = Object.keys(group);
+    // Total number of nodes needed to be sent
+    const total = targetNodes.length;
 
-    // If there are no target nodes, immediately invoke the callback.
-    if (targetNodes.length === 0) {
+    // If there is no node, just return with Null
+    if (total === 0) {
       return callback({}, {});
     }
-    // Prepare objects to collect aggregated errors and results.
+
+    // Initialize the object with aggregate error and result
+    let pending = total;
     const aggregatedErrors = {};
     const aggregatedResults = {};
-    let count = 0;
 
-    targetNodes.forEach((node) => {
+    // Call local comm method for each target node
+    targetNodes.forEach(nodeId => {
+      const nodeInfo = group[nodeId];
       const remote = {
-        node: node,
+        node: nodeInfo,
         service: configuration.service,
-        method: configuration.method,
+        method: configuration.method
       };
-      distribution.local.comm.send(message, remote, (error, result) => {
+
+      global.distribution.local.comm.send(message, remote, (error, result) => {
         if (error) {
-          aggregatedErrors[node.nid] = error;
+          aggregatedErrors[nodeId] = error;
         } else {
-          aggregatedResults[node.nid] = result;
+          aggregatedResults[nodeId] = result;
         }
-        count++;
-        if (count === targetNodes.length) {
+        pending--;
+        // Return aggregated results after getting reponses from all nodes.
+        if (pending === 0) {
           callback(aggregatedErrors, aggregatedResults);
         }
       });
     });
-
   }
 
   return { send };

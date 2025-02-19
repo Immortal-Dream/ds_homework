@@ -1,4 +1,3 @@
-const distribution = require('../../config.js');
 
 /**
  * Distributed status service.
@@ -6,7 +5,7 @@ const distribution = require('../../config.js');
  * @param {object} config - Configuration object. Expected to include a 'gid' property.
  * @return {object} - An object with distributed status methods: get, spawn, stop.
  */
-const status = function(config) {
+const status = function (config) {
   const context = {};
   // Use provided group id or default to 'all'
   context.gid = config.gid || 'all';
@@ -24,30 +23,39 @@ const status = function(config) {
      * @param {object} configuration - Additional configuration if needed.
      * @param {import("../types").Callback} callback - Callback invoked with aggregated results.
      */
-    get: (configuration, callback) => {
+    get: (configuration, callback = (e, v) => { }) => {
+      let errMap, resultMap;
       // Use the distributed comm service to send a "get" request.
-      distribution[context.gid].comm.send(
-        ["get"],
+      global.distribution[context.gid].comm.send(
+        [configuration],
         { service: "status", method: "get" },
-        (errMap, resultMap) => {
-          // Aggregate results from all nodes.
-          let aggregated = { count: 0, heapTotal: 0, heapUsed: 0 };
-          for (const sid in resultMap) {
-            const res = resultMap[sid];
-            aggregated.count += res.count || 0;
-            aggregated.heapTotal += res.heapTotal || 0;
-            aggregated.heapUsed += res.heapUsed || 0;
-          }
-          // Return aggregated result.
-          callback(errMap, aggregated);
-        }
-      );
+
+        (e, v) => {
+          errMap = e;
+          resultMap = v;
+          callback(e, v);
+        });
     },
 
     spawn: (configuration, callback) => {
+      global.distribution[context.gid].comm.send([configuration], {
+        service: "status",
+        method: "status",
+        gid: context.gid
+      }, (error, value) => {
+        callback(error, value)
+      })
     },
 
     stop: (callback) => {
+      global.distribution[context.gid].comm.send([],
+        {
+          service: "status",
+          method: "stop",
+          gid: context.gid
+        }, (error, value) => {
+          callback(error, value);
+        });
     },
   };
 };
