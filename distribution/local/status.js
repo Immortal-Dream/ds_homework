@@ -10,34 +10,29 @@ global.moreStatus = {
 
 status.get = function (configuration, callback) {
   callback = callback || function () { };
-  // Check if the requested configuration is in the global status
-  if (global.moreStatus.hasOwnProperty(configuration)) {
+  if (configuration in global.nodeConfig) {
+    callback(null, global.nodeConfig[configuration]);
+  } else if (configuration in global.moreStatus) {
     callback(null, global.moreStatus[configuration]);
-    return;
-  }
-
-  // Check if the requested configuration is in the process memory usage
-  if (configuration === 'heapTotal') {
+  } else if (configuration === 'heapTotal') {
     callback(null, process.memoryUsage().heapTotal);
-    return;
-  }
-  if (configuration === 'heapUsed') {
+  } else if (configuration === 'heapUsed') {
     callback(null, process.memoryUsage().heapUsed);
-    return;
+  } else {
+    callback(new Error('Status configuration not found'));
   }
-  callback(new Error('Status key not found'));
 };
 
 
-// status.spawn = require('@brown-ds/distribution/distribution/local/status').spawn; 
-// status.stop = require('@brown-ds/distribution/distribution/local/status').stop; 
-status.spawn = function(configuration, callback) {
-  callback = callback || function() { };
-  callback(configuration);
-};
+status.spawn = require('@brown-ds/distribution/distribution/local/status').spawn; 
+status.stop = require('@brown-ds/distribution/distribution/local/status').stop; 
+// status.spawn = function(configuration, callback) {
+//   callback = callback || function() { };
+//   callback(configuration);
+// };
 
-status.stop = function(callback) {
-  callback = callback || function() { };
-  callback();
-};
+// status.stop = function(callback) {
+//   callback = callback || function() { };
+//   callback();
+// };
 module.exports = status;
