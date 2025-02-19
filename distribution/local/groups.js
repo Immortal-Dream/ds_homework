@@ -1,27 +1,29 @@
-
-
 // TODO: Initialize the all and local by default
 // Local storage for the mapping of group names to node sets
-
-const comm = require('../all/comm');
-
 
 // The groups service object
 var groups = {};
 
 /**
  * Retrieve the node-set for the given group name.
- * @param {string} name - The group name (GID).
+ * @param {string} name - The group name (GID). IT CAN BE A STRING OR OBJECT!!!!!!
  * @param {function} callback - Callback function(err, result)
  */
-groups.get = function(name, callback) {
-    if (!groups.hasOwnProperty(name)) {
-      // Group not found: return an error and false value.
-      return callback(new Error("Group not found: " + name), false);
-    }
-    callback(null, groups[name]);
-  };
-  
+groups.get = function (name, callback) {
+  let groupName;
+  if (typeof name === "object") {
+    groupName = name.gid || "all";
+  } else {
+    groupName = name
+  }
+  if (!(groupName in groups)) {
+    // Group not found: return an error and false value.
+    return callback(new Error("Group not found: " + groupName), false);
+  }
+  callback(null, groups[groupName]);
+
+};
+
 
 /**
  * Put a new group mapping.
@@ -32,23 +34,22 @@ groups.get = function(name, callback) {
  * @param {Object} config - An object mapping SIDs to node objects.
  * @param {function} callback - Callback function(err, result)
  */
-groups.put = function(name, config, callback) {
-    groups[name] = config;
-    // Dynamically instantiate the distributed version of each service for this group.
-    global.distribution.mygroup = {
-      status: require('../all/status')({gid: config}),
-      comm: require('../all/comm')({gid: config}),
-      gossip: require('../all/gossip')({gid: config}),
-      groups: require('../all/groups')({gid: config}),
-      routes: require('../all/routes')({gid: config}),
-      mem: require('../all/mem')({gid: config}),
-      store: require('../all/store')({gid: config})
-    };
-    if (typeof callback === "function") {
-      callback(null, config);
-    }
+groups.put = function (config, group, callback) {
+  const configuration = typeof config === "string" ? config : config.gid || "all";
+  // Dynamically instantiate the distributed version of each service for this group.
+  global.distribution[configuration] = {
+    status: require('../all/status')({ gid: config }),
+    comm: require('../all/comm')({ gid: config }),
+    gossip: require('../all/gossip')({ gid: config }),
+    groups: require('../all/groups')({ gid: config }),
+    routes: require('../all/routes')({ gid: config }),
+    mem: require('../all/mem')({ gid: config }),
+    store: require('../all/store')({ gid: config })
   };
-  
+  groups[configuration] = group
+  callback(undefined, group)
+};
+
 
 /**
  * Delete the entire group mapping for the given group name.
@@ -56,21 +57,21 @@ groups.put = function(name, config, callback) {
  * @param {string} name - The group name.
  * @param {function} callback - Callback function(err, result)
  */
-groups.del = function(name, callback) {
-    if (!groups.hasOwnProperty(name)) {
-      // Group not found: return an error and false value.
-      return callback(new Error("Group not found: " + name), false);
-    }
-    // Capture the group mapping before deletion.
-    const deletedGroup = groups[name];
-    // Delete the group mapping.
-    delete groups[name];
-    // Also remove the corresponding distribution entry if it exists.
-    if (typeof distribution !== "undefined" && distribution.hasOwnProperty(name)) {
-      delete distribution[name];
-    }
-    callback(null, deletedGroup);
-  };
+groups.del = function (name, callback) {
+  if (!groups.hasOwnProperty(name)) {
+    // Group not found: return an error and false value.
+    return callback(new Error("Group not found: " + name), false);
+  }
+  // Capture the group mapping before deletion.
+  const deletedGroup = groups[name];
+  // Delete the group mapping.
+  delete groups[name];
+  // Also remove the corresponding distribution entry if it exists.
+  if (typeof distribution !== "undefined" && distribution.hasOwnProperty(name)) {
+    delete distribution[name];
+  }
+  callback(null, deletedGroup);
+};
 
 
 /**
@@ -81,20 +82,20 @@ groups.del = function(name, callback) {
  * @param {Object|string} node - A node object (or its SID if already computed).
  * @param {function} [callback] - Optional callback function(err, result)
  */
-groups.add = function(name, node, callback) {
-    if (!groups.hasOwnProperty(name)) {
-      if (typeof callback === "function") {
-        return callback(new Error("Group not found: " + name), false);
-      }
-      return;
-    }
-    // Use the provided id.getSID function to compute the node's SID.
-    const sid = (typeof node === "object") ? distribution.util.id.getSID(node) : node;
-    groups[name][sid] = node;
+groups.add = function (name, node, callback) {
+  if (!groups.hasOwnProperty(name)) {
     if (typeof callback === "function") {
-      callback(null, groups[name]);
+      return callback(new Error("Group not found: " + name), false);
     }
-  };
+    return;
+  }
+  // Use the provided id.getSID function to compute the node's SID.
+  const sid = (typeof node === "object") ? distribution.util.id.getSID(node) : node;
+  groups[name][sid] = node;
+  if (typeof callback === "function") {
+    callback(null, groups[name]);
+  }
+};
 
 /**
  * Remove a node from the specified group.
@@ -104,7 +105,7 @@ groups.add = function(name, node, callback) {
  * @param {Object|string} node - A node object (or its SID).
  * @param {function} [callback] - Optional callback function(err, result)
  */
-groups.rem = function(name, node, callback) {
+groups.rem = function (name, node, callback) {
   if (!groups[name]) {
     // Group does not exist; no-op.
     if (typeof callback === "function") {
