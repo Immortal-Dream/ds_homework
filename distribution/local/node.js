@@ -42,7 +42,7 @@ const start = function(callback) {
         const args = parsedBody.args || [];
 
         // Retrieve the requested service based on gid and service name
-        routes.get({ service, gid }, (err, serviceObj) => {
+        routes.get({ service, gid }, (err, serviceObject) => {
           if (err) {
             res.writeHead(404, { 'Content-Type': 'application/json' });
             res.end(util.serialize({ error: `Service "${service}" not found in gid "${gid}"` }));
@@ -50,28 +50,30 @@ const start = function(callback) {
           }
 
           // Check if the requested method exists in the service
-          if (typeof serviceObj[method] !== "function") {
+          if (typeof serviceObject[method] !== "function") {
             res.writeHead(404, { 'Content-Type': 'application/json' });
             res.end(util.serialize({ error: `Method "${method}" not found in service "${service}"` }));
             return;
           }
 
           // Execute the requested method and handle response
-          serviceObj[method](...args, (error, result) => {
-            if (error) {
+          serviceObject[method](...args, (error, result) => {
+            if (error instanceof Error) {
               res.writeHead(500, { 'Content-Type': 'application/json' });
-              res.end(util.serialize({ error: error.message }));
+              res.end(util.serialize({ error: error, value: undefined }));
               return;
-            }
+            } 
+            console.error(error);
             res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(util.serialize({ value: result }));
+            res.end(util.serialize({ error: error, value: result }));
           });
         });
 
       } catch (err) {
         // Handle JSON parsing errors
+        // console.error(err)
         res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(util.serialize({ error: "Invalid JSON payload" }));
+        res.end(util.serialize({ err: "Invalid JSON payload" }));
         return;
       }
     });

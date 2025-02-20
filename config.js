@@ -16,7 +16,7 @@ if (useLibrary) {
     distribution = require('@brown-ds/distribution'); // Reference implementation
   } catch (error) {
     if (error.code === 'MODULE_NOT_FOUND') {
-      console.error('Library not found, using local implementation');
+      // console.error('Library not found, using local implementation');
       distribution = require('./distribution'); // Local implementation
     }
   }

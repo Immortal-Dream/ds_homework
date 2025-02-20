@@ -1,5 +1,7 @@
 /** @typedef {import("../types").Callback} Callback */
 
+const { config } = require("yargs");
+
 /**
  * Routes service: Manages mapping between service names and configurations.
  */
@@ -24,25 +26,32 @@ function get(configuration, callback) {
     // Determine the service name and the group id.
     // BUG, input is the serviceName! "bb66a363220902fa5a0e19d5f8787f43da9b46028848f064ae0fd8e292f199cf"
     let serviceName, groupId;
-    if (typeof configuration === 'string') {
-        serviceName = configuration;
-        groupId = 'local';
-    } else {
+    if (typeof configuration === 'object') {
         serviceName = configuration.service;
         groupId = configuration.gid || 'local';
+    } else {
+        serviceName = configuration;
+        groupId = 'local';
     }
-    // Look up in the distributed services for the provided group. TODO: double check this
-    if (!services[groupId] || !(services[groupId][serviceName])) {
+    let targetGroup = undefined
+
+    // find the node within local group
+    if (groupId === 'local' && serviceName in services[groupId]) {
+        targetGroup = services[groupId][serviceName]
+    } else if (groupId && groupId in global.distribution && serviceName in global.distribution[groupId]) {
+        targetGroup = global.distribution[groupId][serviceName]
+    } else if (!services[groupId] || !(services[groupId][serviceName])) {
+        // Look up in the RPC
         const rpc = global.toLocal[serviceName];
         if (rpc) {
-            callback(null, {call: rpc});
+            callback(null, { call: rpc });
             return;
         } else {
-            callback(new Error(`Service '${serviceName}' not found`));
+            callback(new Error(`Routes: Service '${serviceName}' not found`));
             return;
         }
     }
-    callback(null, services[groupId][serviceName]);
+    callback(null, targetGroup);
 }
 
 /**
@@ -63,7 +72,7 @@ function put(service, configuration, callback) {
         callback(new Error('Service object is required'));
         return;
     }
-    if (typeof configuration !== 'object') {
+    if (typeof configuration === 'object') {
         serviceName = configuration.service;
         gid = configuration.gid || 'local';
     } else {
@@ -85,8 +94,8 @@ function put(service, configuration, callback) {
 function rem(configuration, callback) {
     callback = typeof callback === 'function' ? callback : function () { };
     if (configuration in services && (typeof configuration === 'object' || typeof configuration === 'string')) {
-        gid = configuration === 'string'? 'local': configuration.gid;
-        serviceName = configuration === 'string'? configuration: configuration.service
+        gid = configuration === 'string' ? 'local' : configuration.gid;
+        serviceName = configuration === 'string' ? configuration : configuration.service
 
         const removed = services[gid][serviceName];
         delete services[gid][serviceName];

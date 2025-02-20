@@ -21,7 +21,7 @@ groups.get = function (name, callback) {
     return callback(new Error("Group not found: " + groupName), false);
   }
   callback(null, groups[groupName]);
-
+  return groups[groupName]
 };
 
 
@@ -38,13 +38,13 @@ groups.put = function (config, group, callback) {
   const configuration = typeof config === "string" ? config : config.gid || "all";
   // Dynamically instantiate the distributed version of each service for this group.
   global.distribution[configuration] = {
-    status: require('../all/status')({ gid: config }),
-    comm: require('../all/comm')({ gid: config }),
-    gossip: require('../all/gossip')({ gid: config }),
-    groups: require('../all/groups')({ gid: config }),
-    routes: require('../all/routes')({ gid: config }),
-    mem: require('../all/mem')({ gid: config }),
-    store: require('../all/store')({ gid: config })
+    status: require('../all/status')({ gid: configuration }),
+    comm: require('../all/comm')({ gid: configuration }),
+    gossip: require('../all/gossip')({ gid: configuration }),
+    groups: require('../all/groups')({ gid: configuration }),
+    routes: require('../all/routes')({ gid: configuration }),
+    mem: require('../all/mem')({ gid: configuration }),
+    store: require('../all/store')({ gid: configuration })
   };
   groups[configuration] = group
   callback(undefined, group)

@@ -24,7 +24,7 @@ function comm(config) {
    */
   function send(message, configuration, callback) {
     callback = callback || function () { };
-
+    // console.error("Context ID:", context.gid)
     const group = groups.get(context.gid, (error, value) => console.log(value));
     targetNodes = Object.keys(group);
     // Total number of nodes needed to be sent

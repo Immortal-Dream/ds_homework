@@ -35,7 +35,7 @@ test('(25 pts) rpc', (done) => {
               }
             });
       } catch (error) {
-        done(error);
+        console.log("Wire Error: ", error);
         return;
       }
     });

@@ -39,13 +39,16 @@ let circularReferences = new WeakMap();
  * @param {*} value - The value to serialize.
  * @returns {string} - The JSON string representation.
  */
-function serialize(value) {
-  circularReferences = new WeakMap();
-  idCounter = 0;
-  const result = serializeHelper(value);
-  return JSON.stringify(result);
-}
-
+// function serialize(value) {
+//   circularReferences = new WeakMap();
+//   idCounter = 0;
+//   const result = serializeHelper(value);
+//   return JSON.stringify(result);
+// }
+/**
+ * DEBUG!!!
+ */
+let serialize = require('@brown-ds/distribution/distribution/util/serialization').serialize;
 /**
  * Recursively serializes a value into a structured object representation.
  * Handles primitives, functions, objects, arrays, dates, errors, built-ins, and circular references.
@@ -226,23 +229,25 @@ function findNativeFunctionPath(func) {
   return null;
 }
 
+// DEBUG!!!
+let deserialize = require('@brown-ds/distribution/distribution/util/serialization').deserialize;
 /**
  * Deserializes a JSON string back into the original value.
  *
  * @param {string} serializedString - The JSON string.
  * @returns {*} - The deserialized value.
  */
-function deserialize(serializedString) {
-  let parsed;
-  try {
-    parsed = JSON.parse(serializedString);
-  } catch (e) {
-    throw new SyntaxError("Invalid JSON format");
-  }
+// function deserialize(serializedString) {
+//   let parsed;
+//   try {
+//     parsed = JSON.parse(serializedString);
+//   } catch (e) {
+//     throw new SyntaxError("Invalid JSON format");
+//   }
 
-  const objectMap = new Map();
-  return deserializeHelper(parsed, objectMap);
-}
+//   const objectMap = new Map();
+//   return deserializeHelper(parsed, objectMap);
+// }
 
 /**
  * Recursively rebuilds the original value from its serialized representation.

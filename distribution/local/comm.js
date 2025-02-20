@@ -32,8 +32,6 @@ function send(message, remote, callback = () => {}) {
       timeout: 5000, // Added timeout
     };
 
-    console.error(payload);
-    console.error(options);
 
     const req = http.request(options, (res) => {
       let responseData = "";
@@ -55,11 +53,11 @@ function send(message, remote, callback = () => {}) {
 
         try {
           const result = util.deserialize(responseData);
-          if (result.error) {
+          if (result.error instanceof Error) {
             callback(new Error(result.error));
             return;
           }
-          callback(null, result.value);
+          callback(result.error, result.value);
           return;
         } catch (err) {
           callback(new Error("Failed to parse server response"));
