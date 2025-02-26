@@ -63,7 +63,6 @@ const start = function(callback) {
               res.end(util.serialize({ error: error, value: undefined }));
               return;
             } 
-            console.error(error);
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(util.serialize({ error: error, value: result }));
           });

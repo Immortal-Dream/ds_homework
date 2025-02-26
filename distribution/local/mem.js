@@ -1,5 +1,4 @@
-const crypto = require('crypto');
-
+const util = global.distribution.util;
 // In-memory store for key-value pairs
 const store = {};
 
@@ -14,7 +13,7 @@ const store = {};
 function put(value, key, callback) {
   // If no key is provided, compute the sha256 hash of the serialized object
   if (key === null) {
-    key = crypto.createHash('sha256').update(JSON.stringify(value)).digest('hex');
+    key = util.id.getID(value);
   }
   // Idempotently store or update the value under the key
   store[key] = value;

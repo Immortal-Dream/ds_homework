@@ -9,6 +9,7 @@ function routes(config) {
   function put(service, name, callback = () => { }) {
     const message = [service, name];
     const remoteSpec = { service: "routes", method: "put", gid: context.gid };
+    // distribution[context.gid]
     distribution[context.gid].comm.send(message, remoteSpec, callback);
   }
 
