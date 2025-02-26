@@ -10,10 +10,9 @@ function mem(config) {
   function chooseNode(keyString, method) {
     const kid = util.id.getID(keyString);
     // TODO: Get nids by group id.
-    const group = global.distribution.local.groups.get(context.gid, (error, value) => console.log(value));
-    // targetNodes is an array of node IDs (5 digits)
+    const group = global.distribution.local.groups.get(context.gid, (error, value) => {});    // targetNodes is an array of node IDs (5 digits)
+
     let nids = Object.keys(group);
-    console.log("nids: ", nids);
     const targetNid = context.hash(kid, nids); // Use the hash function to choose a node
     const nodeInfo = group[targetNid];
     const remote = {
@@ -31,25 +30,28 @@ function mem(config) {
     // cofiguration is a key string
     get: (configuration, callback) => {
       const remote = chooseNode(configuration, "get");
-      global.distribution.local.comm.send([configuration], remote, callback);
+      global.distribution.local.comm.send([{key: configuration, gid: context.gid}], remote, callback);
     },
 
     put: (state, configuration, callback) => {
       if (configuration === null) {
-        configuration = state;
+        configuration = util.id.getID(state);
       }
       const remote = chooseNode(configuration, "put");
-      global.distribution.local.comm.send([state, configuration], remote, callback);
+      global.distribution.local.comm.send([state, {key: configuration, gid: context.gid}], remote, callback);
       
     },
 
     del: (configuration, callback) => {
       const remote = chooseNode(configuration, "del");
-      global.distribution.local.comm.send([configuration], remote, callback);
+      global.distribution.local.comm.send([{key: configuration, gid: context.gid}], remote, callback);
     },
 
     reconf: (configuration, callback) => {
-
+      if (configuration.hash) {
+        context.hash = configuration.hash;
+      }
+      callback(null, `Reconfigured mem service for group: ${context.gid}`);
     },
   };
 };

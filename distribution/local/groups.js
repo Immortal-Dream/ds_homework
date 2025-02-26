@@ -2,7 +2,7 @@
 // Local storage for the mapping of group names to node sets
 
 // The groups service object
-var groups = {};
+var groups = {"all": {}};
 
 /**
  * Retrieve the node-set for the given group name.
@@ -47,6 +47,12 @@ groups.put = function (config, group, callback) {
     store: require('../all/store')({ gid: configuration })
   };
   groups[configuration] = group
+  // add all nodes to 'all'
+  if (configuration !== "all") {
+    Object.keys(group).forEach((sid) => {
+      groups["all"][sid] = group[sid];
+    });
+  }
   callback(undefined, group)
 };
 
@@ -92,6 +98,7 @@ groups.add = function (name, node, callback) {
   // Use the provided id.getSID function to compute the node's SID.
   const sid = (typeof node === "object") ? distribution.util.id.getSID(node) : node;
   groups[name][sid] = node;
+  groups['all'][sid] = node;
   if (typeof callback === "function") {
     callback(null, groups[name]);
   }
@@ -116,6 +123,7 @@ groups.rem = function (name, node, callback) {
   var sid = (typeof node === "object") ? distribution.util.id.getSID(node) : node;
   if (groups[name].hasOwnProperty(sid)) {
     delete groups[name][sid];
+    delete groups['all'][sid];
   }
   if (typeof callback === "function") {
     callback(null, groups[name]);
