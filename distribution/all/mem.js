@@ -9,7 +9,6 @@ function mem(config) {
 
   function chooseNode(keyString, method) {
     const kid = util.id.getID(keyString);
-    // TODO: Get nids by group id.
     const group = global.distribution.local.groups.get(context.gid, (error, value) => {});    // targetNodes is an array of node IDs (5 digits)
 
     let nids = Object.keys(group);
