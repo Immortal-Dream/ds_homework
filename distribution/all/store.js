@@ -1,21 +1,7 @@
 const distribution = global.distribution;
 const util = distribution.util;
 
-/**
- * Distributed persistent store service.
- *
- * The service maps a given key (converted to a KID) to a node in the group,
- * and then issues an RPC to invoke the corresponding local store method on that node.
- * The configuration (key) passed into each method includes the group ID (gid)
- * to ensure that even if identical keys appear in different groups,
- * the underlying local service can distinguish between them.
- *
- * @param {Object} config - Service configuration.
- *   Expected properties:
- *     - gid: (optional) the node group ID (default: "all").
- *     - hash: (optional) the hash function to use (default: naiveHash).
- * @returns {Object} The store service API: { get, put, del, reconf }.
- */
+
 function store(config) {
   const context = {};
   context.gid = config.gid || 'all';
