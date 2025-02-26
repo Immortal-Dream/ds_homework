@@ -138,3 +138,19 @@ The second challenge was locating a bug in the comm.all service. For the second 
 > What is the point of having a gossip protocol? Why doesn't a node just send the message to _all_ other nodes in its group?
 
 The gossip protocol is useful because it helps spread information in a large network without overwhelming the system. If a node sent messages to all other nodes at once, it would create too much network traffic and slow everything down. Instead, with gossip, a node only tells a few random nodes, and they pass the message to others. This way, the message still reaches everyone, but more efficiently and without overloading the network.
+
+
+# M4: Distributed Storage
+## Summary
+I implemented a distributed key-value storage system, including local and distributed memory and storage services. I also added scalable hash functions and tested everything with different scenarios. Finally, I deployed the system on AWS and measured its performance. Two key challenges were handling data distribution across multiple nodes and ensuring correct error handling when retrieving non-existent keys.
+
+## Correctness & Performance Characterization
+
+*Correctness* -- I added 5 more student tests, taking 0.385 seconds to run. All 35 tests related to "store local" and "store all" passed, taking approximately 1.534 seconds. Additionally, 31 mem tests passed in 1.412 seconds.
+
+*Performance* -- The performance on AWS nodes and the local device is documented in the "m4" section of the package.json file.
+
+
+## Key Feature
+
+> Why is the `reconf` method designed to first identify all the keys to be relocated and then relocate individual objects instead of fetching all the objects immediately and then pushing them to their corresponding locations?

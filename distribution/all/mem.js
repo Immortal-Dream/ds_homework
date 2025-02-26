@@ -29,7 +29,7 @@ function mem(config) {
     // cofiguration is a key string
     get: (configuration, callback) => {
       const remote = chooseNode(configuration, "get");
-      global.distribution.local.comm.send([{key: configuration, gid: context.gid}], remote, callback);
+      global.distribution.local.comm.send([{ key: configuration, gid: context.gid }], remote, callback);
     },
 
     put: (state, configuration, callback) => {

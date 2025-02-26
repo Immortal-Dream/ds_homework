@@ -34,7 +34,7 @@
       "ssd-gb": 2048
     },
     "throughput": {
-      "dev":[
+      "dev": [
         "crawler: 1.13 pages/sec",
         "indexer: 1.13 pages/sec",
         "query: 47.85 queries/sec"
@@ -46,20 +46,45 @@
       ]
     },
     "latency": {
-      "dev": ["basic types: 0.02ms", 
-      "Object with function: 0.016ms",
-      " Complex nested structure: 0.037ms"
-    ],
-      "aws": ["basic types: 0.03ms", 
-      "Object with function: 0.020ms",
-      " Complex nested structure: 0.052ms"]
+      "dev": [
+        "basic types: 0.02ms",
+        "Object with function: 0.016ms",
+        " Complex nested structure: 0.037ms"
+      ],
+      "aws": [
+        "basic types: 0.03ms",
+        "Object with function: 0.020ms",
+        " Complex nested structure: 0.052ms"
+      ]
     },
-    "m2":{
-      "Total time for 1000 requests":"1335.19 ms",
+    "m2": {
+      "Total time for 1000 requests": "1335.19 ms",
       "Average latency": "769.78 ms",
       "Throughput": "748.95 requests per second"
     },
-    "dloc": 150
-    
+    "m4": {
+      "throughput": {
+        "dev": [
+          "put: 270.45 ops/s",
+          "get: 320.12 ops/s"
+        ],
+        "aws": [
+          "put: 610.87 ops/s",
+          "get: 870.22 ops/s"
+        ]
+      },
+      "latency": {
+        "dev": [
+          "put: 3.65ms",
+          "get: 1.55ms"
+        ],
+        "aws": [
+          "put: 3.13ms",
+          "get: 1.22ms"
+        ]
+      },
+      "loc": 2500,
+      "hours": 9
+    }
   }
 }

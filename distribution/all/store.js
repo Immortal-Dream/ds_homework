@@ -30,7 +30,6 @@ function store(config) {
       if (configuration === null) {
         // Special handling: list all keys in the group.
         // Send the request to the current node, assuming its local store
-        // get implementation will list all keys when key is null.
         const remote = { node: distribution.node.config, service: "store", method: "get" };
         global.distribution.local.comm.send([{ key: null, gid: context.gid }], remote, (err, result) => {
           // If no error and result is an array (list of keys), convert it to an object.
