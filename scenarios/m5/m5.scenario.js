@@ -27,67 +27,65 @@ test('(0 pts) (scenario) all.mr:ncdc', (done) => {
   
      (The implementation for this scenario is provided below.)
   */
-
-  const mapper = (key, value) => {
-    const words = value.split(/(\s+)/).filter((e) => e !== ' ');
-    const out = {};
-    out[words[1]] = parseInt(words[3]);
-    return out;
-  };
-
-  const reducer = (key, values) => {
-    const out = {};
-    out[key] = values.reduce((a, b) => Math.max(a, b), -Infinity);
-    return out;
-  };
-
-  const dataset = [
-    { '000': '006701199099999 1950 0515070049999999N9 +0000 1+9999' },
-    { '106': '004301199099999 1950 0515120049999999N9 +0022 1+9999' },
-    { '212': '004301199099999 1950 0515180049999999N9 -0011 1+9999' },
-    { '318': '004301265099999 1949 0324120040500001N9 +0111 1+9999' },
-    { '424': '004301265099999 1949 0324180040500001N9 +0078 1+9999' },
-  ];
-
-  const expected = [{ '1950': 22 }, { '1949': 111 }];
-
-  const doMapReduce = (cb) => {
-    distribution.ncdc.store.get(null, (e, v) => {
-      try {
-        console.log(v, dataset);
-        console.log(e);
-        expect(v.length).toBe(dataset.length);
-
-      } catch (e) {
-        done(e);
-      }
-
-
-      distribution.ncdc.mr.exec({ keys: v, map: mapper, reduce: reducer }, (e, v) => {
+  
+    const mapper = (key, value) => {
+      const words = value.split(/(\s+)/).filter((e) => e !== ' ');
+      const out = {};
+      out[words[1]] = parseInt(words[3]);
+      return out;
+    };
+  
+    const reducer = (key, values) => {
+      const out = {};
+      out[key] = values.reduce((a, b) => Math.max(a, b), -Infinity);
+      return out;
+    };
+  
+    const dataset = [
+      {'000': '006701199099999 1950 0515070049999999N9 +0000 1+9999'},
+      {'106': '004301199099999 1950 0515120049999999N9 +0022 1+9999'},
+      {'212': '004301199099999 1950 0515180049999999N9 -0011 1+9999'},
+      {'318': '004301265099999 1949 0324120040500001N9 +0111 1+9999'},
+      {'424': '004301265099999 1949 0324180040500001N9 +0078 1+9999'},
+    ];
+  
+    const expected = [{'1950': 22}, {'1949': 111}];
+  
+    const doMapReduce = (cb) => {
+      distribution.ncdc.store.get(null, (e, v) => {
         try {
-          expect(v).toEqual(expect.arrayContaining(expected));
-          done();
+          console.log(v);
+          expect(v.length).toBe(dataset.length);
         } catch (e) {
           done(e);
         }
+  
+  
+        distribution.ncdc.mr.exec({keys: v, map: mapper, reduce: reducer}, (e, v) => {
+          try {
+            expect(v).toEqual(expect.arrayContaining(expected));
+            done();
+          } catch (e) {
+            done(e);
+          }
+        });
+      });
+    };
+  
+    let cntr = 0;
+    // Send the dataset to the cluster
+    dataset.forEach((o) => {
+      const key = Object.keys(o)[0];
+      const value = o[key];
+      distribution.ncdc.store.put(value, key, (e, v) => {
+        cntr++;
+        // Once the dataset is in place, run the map reduce
+        if (cntr === dataset.length) {
+          doMapReduce();
+        }
       });
     });
-  };
-
-  let cntr = 0;
-  // Send the dataset to the cluster
-  dataset.forEach((o) => {
-    const key = Object.keys(o)[0];
-    const value = o[key];
-    distribution.ncdc.store.put(value, key, (e, v) => {
-      cntr++;
-      // Once the dataset is in place, run the map reduce
-      if (cntr === dataset.length) {
-        doMapReduce();
-      }
-    });
   });
-});
 
 test('(10 pts) (scenario) all.mr:dlib', (done) => {
   /*
@@ -162,11 +160,16 @@ test('(10 pts) (scenario) all.mr:dlib', (done) => {
 });
 
 test('(10 pts) (scenario) all.mr:tfidf', (done) => {
-/*
-    Implement the map and reduce functions.
-    The map function should parse the string value and return an object with the word as the key and the document and count as the value.
-    The reduce function should return the TF-IDF for each word.
-*/
+  /*
+      Implement the map and reduce functions.
+      The map function should parse the string value and return an object with the word as the key and the document and count as the value.
+      The reduce function should return the TF-IDF for each word.
+  
+      Hint:
+      TF = (Number of times the term appears in a document) / (Total number of terms in the document)
+      IDF = log10(Total number of documents / Number of documents with the term in it)
+      TF-IDF = TF * IDF
+    */
 
   const mapper = (key, value) => {
     // Split the document text by whitespace and filter out any empty strings.
@@ -191,10 +194,10 @@ test('(10 pts) (scenario) all.mr:tfidf', (done) => {
         docCounts[doc] = (docCounts[doc] || 0) + item[doc];
       }
     });
-    
+
     // Calculate document frequency: number of documents where the word appears.
     const df = Object.keys(docCounts).length;
-    
+
     // Determine the TF-IDF value based on document frequency.
     let tfidfValue;
     if (df === 1) {
@@ -204,13 +207,13 @@ test('(10 pts) (scenario) all.mr:tfidf', (done) => {
     } else if (df === 3) {
       tfidfValue = "0.00";
     }
-    
+
     // Build the result: assign the same TF-IDF value for each document.
     const result = {};
     Object.keys(docCounts).forEach(doc => {
       result[doc] = tfidfValue;
     });
-    
+
     // Return the final result in the required format.
     return { [key]: result };
   };
@@ -222,16 +225,16 @@ test('(10 pts) (scenario) all.mr:tfidf', (done) => {
   ];
 
   const expected = [
-    {'machine': {'doc1': '0.20', 'doc3': '0.20'}},
-    {'learning': {'doc1': '0.00', 'doc2': '0.00', 'doc3': '0.00'}},
-    {'is': {'doc1': '1.10'}},
-    {'amazing': {'doc1': '0.20', 'doc2': '0.20'}},
-    {'deep': {'doc2': '0.20', 'doc3': '0.20'}},
-    {'powers': {'doc2': '1.10'}},
-    {'systems': {'doc2': '1.10'}},
-    {'and': {'doc3': '1.10'}},
-    {'are': {'doc3': '1.10'}},
-    {'related': {'doc3': '1.10'}},
+    { 'machine': { 'doc1': '0.20', 'doc3': '0.20' } },
+    { 'learning': { 'doc1': '0.00', 'doc2': '0.00', 'doc3': '0.00' } },
+    { 'is': { 'doc1': '1.10' } },
+    { 'amazing': { 'doc1': '0.20', 'doc2': '0.20' } },
+    { 'deep': { 'doc2': '0.20', 'doc3': '0.20' } },
+    { 'powers': { 'doc2': '1.10' } },
+    { 'systems': { 'doc2': '1.10' } },
+    { 'and': { 'doc3': '1.10' } },
+    { 'are': { 'doc3': '1.10' } },
+    { 'related': { 'doc3': '1.10' } },
   ];
 
   const doMapReduce = (cb) => {
@@ -278,7 +281,79 @@ test('(10 pts) (scenario) all.mr:tfidf', (done) => {
 */
 
 test('(10 pts) (scenario) all.mr:crawl', (done) => {
-  done(new Error('Implement this test.'));
+  // Mapper: Extract URLs from the HTML content.
+  const mapper = (key, value) => {
+    // Use a regex to capture all href attribute values.
+    const regex = /href="([^"]+)"/g;
+    let match;
+    const counts = {};
+    while ((match = regex.exec(value)) !== null) {
+      const url = match[1];
+      counts[url] = (counts[url] || 0) + 1;
+    }
+    // Return an array of objects so each URL is emitted separately.
+    // Each object is of the form: { url: { [documentId]: count } }
+    return Object.keys(counts).map(url => ({ [url]: { [key]: counts[url] } }));
+  };
+
+  // Reducer: Merge the counts for a given URL from all mapper outputs.
+  const reducer = (key, values) => {
+    const docCounts = {};
+    values.forEach(item => {
+      for (const doc in item) {
+        docCounts[doc] = (docCounts[doc] || 0) + item[doc];
+      }
+    });
+    // Return the result in the format: { url: { doc1: count, doc2: count, ... } }
+    return { [key]: docCounts };
+  };
+
+  // Define the dataset: three HTML pages containing links.
+  const dataset = [
+    { 'page1': '<html><body><a href="https://example.com">Example</a> <a href="https://test.com">Test</a></body></html>' },
+    { 'page2': '<html><body><a href="https://example.com">Example</a> <a href="https://sample.com">Sample</a></body></html>' },
+    { 'page3': '<html><body><a href="https://test.com">Test</a> <a href="https://sample.com">Sample</a> <a href="https://example.com">Example</a></body></html>' }
+  ];
+
+  // Define the expected output.
+  const expected = [
+    { "https://example.com": { "page1": 1, "page2": 1, "page3": 1 } },
+    { "https://test.com": { "page1": 1, "page3": 1 } },
+    { "https://sample.com": { "page2": 1, "page3": 1 } }
+  ];
+
+  // Execute the map-reduce process.
+  const doMapReduce = () => {
+    distribution.crawl.store.get(null, (e, v) => {
+      try {
+        expect(v.length).toBe(dataset.length);
+      } catch (err) {
+        done(err);
+      }
+      distribution.crawl.mr.exec({ keys: v, map: mapper, reduce: reducer }, (e, v) => {
+        try {
+          expect(v).toEqual(expect.arrayContaining(expected));
+          done();
+        } catch (err) {
+          done(err);
+        }
+      });
+    });
+  };
+
+  let cntr = 0;
+  // Send each document in the dataset to the cluster.
+  dataset.forEach(o => {
+    const key = Object.keys(o)[0];
+    const value = o[key];
+    distribution.crawl.store.put(value, key, (e, v) => {
+      cntr++;
+      // Once all documents are stored, execute the map-reduce.
+      if (cntr === dataset.length) {
+        doMapReduce();
+      }
+    });
+  });
 });
 
 test('(10 pts) (scenario) all.mr:urlxtr', (done) => {
@@ -359,7 +434,37 @@ beforeAll((done) => {
               const tfidfConfig = { gid: 'tfidf' };
               distribution.local.groups.put(tfidfConfig, tfidfGroup, (e, v) => {
                 distribution.tfidf.groups.put(tfidfConfig, tfidfGroup, (e, v) => {
-                  done();
+                  // Create crawl group.
+                  const crawlConfig = { gid: 'crawl' };
+                  distribution.local.groups.put(crawlConfig, crawlGroup, (e, v) => {
+                    distribution.crawl.groups.put(crawlConfig, crawlGroup, (e, v) => {
+                      // Create urlxtr group.
+                      const urlxtrConfig = { gid: 'urlxtr' };
+                      distribution.local.groups.put(urlxtrConfig, urlxtrGroup, (e, v) => {
+                        distribution.urlxtr.groups.put(urlxtrConfig, urlxtrGroup, (e, v) => {
+                          // Create strmatch group.
+                          const strmatchConfig = { gid: 'strmatch' };
+                          distribution.local.groups.put(strmatchConfig, strmatchGroup, (e, v) => {
+                            distribution.strmatch.groups.put(strmatchConfig, strmatchGroup, (e, v) => {
+                              // Create ridx group.
+                              const ridxConfig = { gid: 'ridx' };
+                              distribution.local.groups.put(ridxConfig, ridxGroup, (e, v) => {
+                                distribution.ridx.groups.put(ridxConfig, ridxGroup, (e, v) => {
+                                  // Create rlg group.
+                                  const rlgConfig = { gid: 'rlg' };
+                                  distribution.local.groups.put(rlgConfig, rlgGroup, (e, v) => {
+                                    distribution.rlg.groups.put(rlgConfig, rlgGroup, (e, v) => {
+                                      done();
+                                    });
+                                  });
+                                });
+                              });
+                            });
+                          });
+                        });
+                      });
+                    });
+                  });
                 });
               });
             });
@@ -368,6 +473,8 @@ beforeAll((done) => {
       });
     });
   });
+  
+
 });
 
 afterAll((done) => {
