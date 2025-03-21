@@ -162,11 +162,11 @@ test('(10 pts) (scenario) all.mr:dlib', (done) => {
 });
 
 test('(10 pts) (scenario) all.mr:tfidf', (done) => {
-  /*
-      Implement the map and reduce functions.
-      The map function should parse the string value and return an object with the word as the key and the document and count as the value.
-      The reduce function should return the TF-IDF for each word.
-  */
+/*
+    Implement the map and reduce functions.
+    The map function should parse the string value and return an object with the word as the key and the document and count as the value.
+    The reduce function should return the TF-IDF for each word.
+*/
 
   const mapper = (key, value) => {
     // Split the document text by whitespace and filter out any empty strings.
@@ -222,16 +222,16 @@ test('(10 pts) (scenario) all.mr:tfidf', (done) => {
   ];
 
   const expected = [
-    { 'machine': { 'doc1': '0.20', 'doc3': '0.20' } },
-    { 'learning': { 'doc1': '0.00', 'doc2': '0.00', 'doc3': '0.00' } },
-    { 'is': { 'doc1': '1.10' } },
-    { 'amazing': { 'doc1': '0.20', 'doc2': '0.20' } },
-    { 'deep': { 'doc2': '0.20', 'doc3': '0.20' } },
-    { 'powers': { 'doc2': '1.10' } },
-    { 'systems': { 'doc2': '1.10' } },
-    { 'and': { 'doc3': '1.10' } },
-    { 'are': { 'doc3': '1.10' } },
-    { 'related': { 'doc3': '1.10' } },
+    {'machine': {'doc1': '0.20', 'doc3': '0.20'}},
+    {'learning': {'doc1': '0.00', 'doc2': '0.00', 'doc3': '0.00'}},
+    {'is': {'doc1': '1.10'}},
+    {'amazing': {'doc1': '0.20', 'doc2': '0.20'}},
+    {'deep': {'doc2': '0.20', 'doc3': '0.20'}},
+    {'powers': {'doc2': '1.10'}},
+    {'systems': {'doc2': '1.10'}},
+    {'and': {'doc3': '1.10'}},
+    {'are': {'doc3': '1.10'}},
+    {'related': {'doc3': '1.10'}},
   ];
 
   const doMapReduce = (cb) => {
