@@ -357,19 +357,280 @@ test('(10 pts) (scenario) all.mr:crawl', (done) => {
 });
 
 test('(10 pts) (scenario) all.mr:urlxtr', (done) => {
-  done(new Error('Implement the map and reduce functions'));
+  // Mapper: Extract URLs from text.
+  const mapper = (key, value) => {
+    // Use a regex to find URLs starting with http or https.
+    // This regex matches sequences starting with "http://" or "https://" followed by non-whitespace characters.
+    const regex = /https?:\/\/\S+/g;
+    let match;
+    const urls = [];
+    while ((match = regex.exec(value)) !== null) {
+      // Remove any trailing punctuation (like commas or periods) if necessary.
+      let url = match[0].replace(/[.,;!?]$/, '');
+      urls.push(url);
+    }
+    // Emit one object per URL: { url: 1 }
+    return urls.map(url => ({ [url]: 1 }));
+  };
+
+  // Reducer: Sum counts for the same URL.
+  const reducer = (key, values) => {
+    const sum = values.reduce((acc, count) => acc + count, 0);
+    return { [key]: sum };
+  };
+
+  // Define a dataset with three documents containing URLs.
+  const dataset = [
+    { 'doc1': 'Visit https://example.com and https://test.com' },
+    { 'doc2': 'Check https://example.com for updates. Also see https://sample.com' },
+    { 'doc3': 'For more info, visit https://test.com and https://example.com.' }
+  ];
+
+  // Expected output:
+  // "https://example.com" appears 3 times, "https://test.com" appears 2 times, and "https://sample.com" appears 1 time.
+  const expected = [
+    { "https://example.com": 3 },
+    { "https://test.com": 2 },
+    { "https://sample.com": 1 }
+  ];
+
+  // Function to run the map-reduce job.
+  const doMapReduce = () => {
+    distribution.urlxtr.store.get(null, (e, v) => {
+      try {
+        expect(v.length).toBe(dataset.length);
+      } catch (err) {
+        done(err);
+      }
+      distribution.urlxtr.mr.exec({ keys: v, map: mapper, reduce: reducer }, (e, v) => {
+        try {
+          expect(v).toEqual(expect.arrayContaining(expected));
+          done();
+        } catch (err) {
+          done(err);
+        }
+      });
+    });
+  };
+
+  let cntr = 0;
+  // Store each document in the cluster.
+  dataset.forEach(o => {
+    const key = Object.keys(o)[0];
+    const value = o[key];
+    distribution.urlxtr.store.put(value, key, (e, v) => {
+      cntr++;
+      // Once all documents are stored, run the map-reduce.
+      if (cntr === dataset.length) {
+        doMapReduce();
+      }
+    });
+  });
 });
 
 test('(10 pts) (scenario) all.mr:strmatch', (done) => {
-  done(new Error('Implement the map and reduce functions'));
+  const mapper = (key, value) => {
+    // Use a regex to match the word "hello" (whole word, case-insensitive)
+    const regex = /\bhello\b/gi;
+    const matches = value.match(regex);
+    const count = matches ? matches.length : 0;
+    // Only emit if "hello" is found.
+    if (count > 0) {
+      return [{ "hello": { [key]: count } }];
+    }
+    return [];
+  };
+
+  // Reducer: merge counts for "hello" across documents.
+  const reducer = (key, values) => {
+    // 'values' is an array of objects, each like: { [docId]: count }
+    const docCounts = {};
+    values.forEach(item => {
+      for (const doc in item) {
+        docCounts[doc] = (docCounts[doc] || 0) + item[doc];
+      }
+    });
+    return { [key]: docCounts };
+  };
+
+  // Define the dataset.
+  const dataset = [
+    { 'doc1': 'hello world, hello there' },
+    { 'doc2': 'no greeting here' },
+    { 'doc3': 'well, hello!' }
+  ];
+
+  // Expected output: only doc1 and doc3 have "hello".
+  const expected = [
+    { "hello": { "doc1": 2, "doc3": 1 } }
+  ];
+
+  // Run the map-reduce job.
+  const doMapReduce = () => {
+    distribution.strmatch.store.get(null, (e, v) => {
+      try {
+        expect(v.length).toBe(dataset.length);
+      } catch (err) {
+        done(err);
+      }
+      distribution.strmatch.mr.exec({ keys: v, map: mapper, reduce: reducer }, (e, v) => {
+        try {
+          expect(v).toEqual(expect.arrayContaining(expected));
+          done();
+        } catch (err) {
+          done(err);
+        }
+      });
+    });
+  };
+
+  let cntr = 0;
+  // Store each document in the cluster.
+  dataset.forEach(o => {
+    const key = Object.keys(o)[0];
+    const value = o[key];
+    distribution.strmatch.store.put(value, key, (e, v) => {
+      cntr++;
+      if (cntr === dataset.length) {
+        doMapReduce();
+      }
+    });
+  });
 });
 
 test('(10 pts) (scenario) all.mr:ridx', (done) => {
-  done(new Error('Implement the map and reduce functions'));
+  const mapper = (key, value) => {
+    // Convert the document text to lowercase for consistent indexing.
+    const words = value.toLowerCase().split(/\s+/).filter(word => word.length > 0);
+    // Deduplicate the words within the document.
+    const uniqueWords = [...new Set(words)];
+    // Emit an array of objects, each of the form: { word: docId }
+    return uniqueWords.map(word => ({ [word]: key }));
+  };
+
+  // Reducer: combine the document ids for a given word.
+  const reducer = (key, values) => {
+    // 'values' is an array of document ids (strings).
+    // Deduplicate them and sort for consistency.
+    const docs = [...new Set(values)];
+    docs.sort();
+    return { [key]: docs };
+  };
+
+  // Define the dataset.
+  const dataset = [
+    { 'doc1': 'the quick brown fox' },
+    { 'doc2': 'the quick red fox' },
+    { 'doc3': 'the lazy dog' }
+  ];
+
+  // Define the expected reverse index.
+  const expected = [
+    { "the": ["doc1", "doc2", "doc3"] },
+    { "quick": ["doc1", "doc2"] },
+    { "brown": ["doc1"] },
+    { "fox": ["doc1", "doc2"] },
+    { "red": ["doc2"] },
+    { "lazy": ["doc3"] },
+    { "dog": ["doc3"] }
+  ];
+
+  // Function to run the map-reduce job.
+  const doMapReduce = () => {
+    distribution.ridx.store.get(null, (e, v) => {
+      try {
+        expect(v.length).toBe(dataset.length);
+      } catch (err) {
+        done(err);
+      }
+      distribution.ridx.mr.exec({ keys: v, map: mapper, reduce: reducer }, (e, v) => {
+        try {
+          expect(v).toEqual(expect.arrayContaining(expected));
+          done();
+        } catch (err) {
+          done(err);
+        }
+      });
+    });
+  };
+
+  let cntr = 0;
+  // Send each document in the dataset to the cluster.
+  dataset.forEach(o => {
+    const key = Object.keys(o)[0];
+    const value = o[key];
+    distribution.ridx.store.put(value, key, (e, v) => {
+      cntr++;
+      // Once all documents are stored, execute the map-reduce job.
+      if (cntr === dataset.length) {
+        doMapReduce();
+      }
+    });
+  });
 });
 
 test('(10 pts) (scenario) all.mr:rlg', (done) => {
-  done(new Error('Implement the map and reduce functions'));
+  const mapper = (key, value) => {
+    const words = value.split(/\s+/).filter(word => word.length > 0);
+    return words.map(word => {
+      // Get the last character of the word.
+      const lastLetter = word[word.length - 1];
+      return { [lastLetter]: word };
+    });
+  };
+
+  // Reducer: Merge all word values for the same last-letter key.
+  const reducer = (key, values) => {
+    // 'values' is an array of words (strings) from mapper outputs.
+    const uniqueWords = [...new Set(values)];
+    uniqueWords.sort(); // Sort alphabetically.
+    return { [key]: uniqueWords };
+  };
+
+  // Define the dataset.
+  const dataset = [
+    { 'doc1': 'cat bat mat' },
+    { 'doc2': 'dog log fog' },
+    { 'doc3': 'rat bat' }
+  ];
+
+  // Expected output.
+  const expected = [
+    { "t": ["bat", "cat", "mat", "rat"] },
+    { "g": ["dog", "fog", "log"] }
+  ];
+
+  // Execute the map-reduce job.
+  const doMapReduce = () => {
+    distribution.rlg.store.get(null, (e, v) => {
+      try {
+        expect(v.length).toBe(dataset.length);
+      } catch (err) {
+        done(err);
+      }
+      distribution.rlg.mr.exec({ keys: v, map: mapper, reduce: reducer }, (e, result) => {
+        try {
+          expect(result).toEqual(expect.arrayContaining(expected));
+          done();
+        } catch (err) {
+          done(err);
+        }
+      });
+    });
+  };
+
+  let cntr = 0;
+  // Send each document to the cluster.
+  dataset.forEach(o => {
+    const key = Object.keys(o)[0];
+    const value = o[key];
+    distribution.rlg.store.put(value, key, (e, v) => {
+      cntr++;
+      if (cntr === dataset.length) {
+        doMapReduce();
+      }
+    });
+  });
 });
 
 /*
