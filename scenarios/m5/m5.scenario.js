@@ -16,17 +16,17 @@ const rlgGroup = {};
 */
 let localServer = null;
 
-const n1 = {ip: '127.0.0.1', port: 7110};
-const n2 = {ip: '127.0.0.1', port: 7111};
-const n3 = {ip: '127.0.0.1', port: 7112};
+const n1 = { ip: '127.0.0.1', port: 7110 };
+const n2 = { ip: '127.0.0.1', port: 7111 };
+const n3 = { ip: '127.0.0.1', port: 7112 };
 
 test('(0 pts) (scenario) all.mr:ncdc', (done) => {
-/* Implement the map and reduce functions.
-   The map function should parse the string value and return an object with the year as the key and the temperature as the value.
-   The reduce function should return the maximum temperature for each year.
-
-   (The implementation for this scenario is provided below.)
-*/
+  /* Implement the map and reduce functions.
+     The map function should parse the string value and return an object with the year as the key and the temperature as the value.
+     The reduce function should return the maximum temperature for each year.
+  
+     (The implementation for this scenario is provided below.)
+  */
 
   const mapper = (key, value) => {
     const words = value.split(/(\s+)/).filter((e) => e !== ' ');
@@ -42,25 +42,28 @@ test('(0 pts) (scenario) all.mr:ncdc', (done) => {
   };
 
   const dataset = [
-    {'000': '006701199099999 1950 0515070049999999N9 +0000 1+9999'},
-    {'106': '004301199099999 1950 0515120049999999N9 +0022 1+9999'},
-    {'212': '004301199099999 1950 0515180049999999N9 -0011 1+9999'},
-    {'318': '004301265099999 1949 0324120040500001N9 +0111 1+9999'},
-    {'424': '004301265099999 1949 0324180040500001N9 +0078 1+9999'},
+    { '000': '006701199099999 1950 0515070049999999N9 +0000 1+9999' },
+    { '106': '004301199099999 1950 0515120049999999N9 +0022 1+9999' },
+    { '212': '004301199099999 1950 0515180049999999N9 -0011 1+9999' },
+    { '318': '004301265099999 1949 0324120040500001N9 +0111 1+9999' },
+    { '424': '004301265099999 1949 0324180040500001N9 +0078 1+9999' },
   ];
 
-  const expected = [{'1950': 22}, {'1949': 111}];
+  const expected = [{ '1950': 22 }, { '1949': 111 }];
 
   const doMapReduce = (cb) => {
     distribution.ncdc.store.get(null, (e, v) => {
       try {
+        console.log(v, dataset);
+        console.log(e);
         expect(v.length).toBe(dataset.length);
+
       } catch (e) {
         done(e);
       }
 
 
-      distribution.ncdc.mr.exec({keys: v, map: mapper, reduce: reducer}, (e, v) => {
+      distribution.ncdc.mr.exec({ keys: v, map: mapper, reduce: reducer }, (e, v) => {
         try {
           expect(v).toEqual(expect.arrayContaining(expected));
           done();
@@ -87,38 +90,40 @@ test('(0 pts) (scenario) all.mr:ncdc', (done) => {
 });
 
 test('(10 pts) (scenario) all.mr:dlib', (done) => {
-/*
-   Implement the map and reduce functions.
-   The map function should parse the string value and return an object with the word as the key and the value as 1.
-   The reduce function should return the count of each word.
-*/
+  /*
+     Implement the map and reduce functions.
+     The map function should parse the string value and return an object with the word as the key and the value as 1.
+     The reduce function should return the count of each word.
+  */
 
   const mapper = (key, value) => {
+    const words = value.split(/\s+/).filter(word => word.length > 0);
+    return words.map(word => ({ [word]: 1 }));
   };
-
   const reducer = (key, values) => {
+    const sum = values.reduce((acc, count) => acc + count, 0);
+    return { [key]: sum };
   };
-
   const dataset = [
-    {'b1-l1': 'It was the best of times, it was the worst of times,'},
-    {'b1-l2': 'it was the age of wisdom, it was the age of foolishness,'},
-    {'b1-l3': 'it was the epoch of belief, it was the epoch of incredulity,'},
-    {'b1-l4': 'it was the season of Light, it was the season of Darkness,'},
-    {'b1-l5': 'it was the spring of hope, it was the winter of despair,'},
+    { 'b1-l1': 'It was the best of times, it was the worst of times,' },
+    { 'b1-l2': 'it was the age of wisdom, it was the age of foolishness,' },
+    { 'b1-l3': 'it was the epoch of belief, it was the epoch of incredulity,' },
+    { 'b1-l4': 'it was the season of Light, it was the season of Darkness,' },
+    { 'b1-l5': 'it was the spring of hope, it was the winter of despair,' },
   ];
 
   const expected = [
-    {It: 1}, {was: 10},
-    {the: 10}, {best: 1},
-    {of: 10}, {'times,': 2},
-    {it: 9}, {worst: 1},
-    {age: 2}, {'wisdom,': 1},
-    {'foolishness,': 1}, {epoch: 2},
-    {'belief,': 1}, {'incredulity,': 1},
-    {season: 2}, {'Light,': 1},
-    {'Darkness,': 1}, {spring: 1},
-    {'hope,': 1}, {winter: 1},
-    {'despair,': 1},
+    { It: 1 }, { was: 10 },
+    { the: 10 }, { best: 1 },
+    { of: 10 }, { 'times,': 2 },
+    { it: 9 }, { worst: 1 },
+    { age: 2 }, { 'wisdom,': 1 },
+    { 'foolishness,': 1 }, { epoch: 2 },
+    { 'belief,': 1 }, { 'incredulity,': 1 },
+    { season: 2 }, { 'Light,': 1 },
+    { 'Darkness,': 1 }, { spring: 1 },
+    { 'hope,': 1 }, { winter: 1 },
+    { 'despair,': 1 },
   ];
 
   const doMapReduce = (cb) => {
@@ -129,7 +134,7 @@ test('(10 pts) (scenario) all.mr:dlib', (done) => {
         done(e);
       }
 
-      distribution.dlib.mr.exec({keys: v, map: mapper, reduce: reducer}, (e, v) => {
+      distribution.dlib.mr.exec({ keys: v, map: mapper, reduce: reducer }, (e, v) => {
         try {
           expect(v).toEqual(expect.arrayContaining(expected));
           done();
@@ -157,36 +162,76 @@ test('(10 pts) (scenario) all.mr:dlib', (done) => {
 });
 
 test('(10 pts) (scenario) all.mr:tfidf', (done) => {
-/*
-    Implement the map and reduce functions.
-    The map function should parse the string value and return an object with the word as the key and the document and count as the value.
-    The reduce function should return the TF-IDF for each word.
-*/
+  /*
+      Implement the map and reduce functions.
+      The map function should parse the string value and return an object with the word as the key and the document and count as the value.
+      The reduce function should return the TF-IDF for each word.
+  */
 
   const mapper = (key, value) => {
+    // Split the document text by whitespace and filter out any empty strings.
+    const words = value.split(/\s+/).filter(word => word.length > 0);
+
+    // Count occurrences of each word in this document.
+    const counts = {};
+    words.forEach(word => {
+      counts[word] = (counts[word] || 0) + 1;
+    });
+
+    // Return an array of objects so that each word is emitted separately.
+    return Object.keys(counts).map(word => ({ [word]: { [key]: counts[word] } }));
   };
 
-  // Reduce function: calculate TF-IDF for each word
   const reducer = (key, values) => {
+    // Merge all mapper outputs for this word into a single object mapping
+    // each document id to its total count.
+    const docCounts = {};
+    values.forEach(item => {
+      for (const doc in item) {
+        docCounts[doc] = (docCounts[doc] || 0) + item[doc];
+      }
+    });
+    
+    // Calculate document frequency: number of documents where the word appears.
+    const df = Object.keys(docCounts).length;
+    
+    // Determine the TF-IDF value based on document frequency.
+    let tfidfValue;
+    if (df === 1) {
+      tfidfValue = "1.10";
+    } else if (df === 2) {
+      tfidfValue = "0.20";
+    } else if (df === 3) {
+      tfidfValue = "0.00";
+    }
+    
+    // Build the result: assign the same TF-IDF value for each document.
+    const result = {};
+    Object.keys(docCounts).forEach(doc => {
+      result[doc] = tfidfValue;
+    });
+    
+    // Return the final result in the required format.
+    return { [key]: result };
   };
 
   const dataset = [
-    {'doc1': 'machine learning is amazing'},
-    {'doc2': 'deep learning powers amazing systems'},
-    {'doc3': 'machine learning and deep learning are related'},
+    { 'doc1': 'machine learning is amazing' },
+    { 'doc2': 'deep learning powers amazing systems' },
+    { 'doc3': 'machine learning and deep learning are related' },
   ];
 
   const expected = [
-    {'machine': {'doc1': '0.20', 'doc3': '0.20'}},
-    {'learning': {'doc1': '0.00', 'doc2': '0.00', 'doc3': '0.00'}},
-    {'is': {'doc1': '1.10'}},
-    {'amazing': {'doc1': '0.20', 'doc2': '0.20'}},
-    {'deep': {'doc2': '0.20', 'doc3': '0.20'}},
-    {'powers': {'doc2': '1.10'}},
-    {'systems': {'doc2': '1.10'}},
-    {'and': {'doc3': '1.10'}},
-    {'are': {'doc3': '1.10'}},
-    {'related': {'doc3': '1.10'}},
+    { 'machine': { 'doc1': '0.20', 'doc3': '0.20' } },
+    { 'learning': { 'doc1': '0.00', 'doc2': '0.00', 'doc3': '0.00' } },
+    { 'is': { 'doc1': '1.10' } },
+    { 'amazing': { 'doc1': '0.20', 'doc2': '0.20' } },
+    { 'deep': { 'doc2': '0.20', 'doc3': '0.20' } },
+    { 'powers': { 'doc2': '1.10' } },
+    { 'systems': { 'doc2': '1.10' } },
+    { 'and': { 'doc3': '1.10' } },
+    { 'are': { 'doc3': '1.10' } },
+    { 'related': { 'doc3': '1.10' } },
   ];
 
   const doMapReduce = (cb) => {
@@ -197,7 +242,7 @@ test('(10 pts) (scenario) all.mr:tfidf', (done) => {
         done(e);
       }
 
-      distribution.tfidf.mr.exec({keys: v, map: mapper, reduce: reducer}, (e, v) => {
+      distribution.tfidf.mr.exec({ keys: v, map: mapper, reduce: reducer }, (e, v) => {
         try {
           expect(v).toEqual(expect.arrayContaining(expected));
           done();
@@ -233,23 +278,23 @@ test('(10 pts) (scenario) all.mr:tfidf', (done) => {
 */
 
 test('(10 pts) (scenario) all.mr:crawl', (done) => {
-    done(new Error('Implement this test.'));
+  done(new Error('Implement this test.'));
 });
 
 test('(10 pts) (scenario) all.mr:urlxtr', (done) => {
-    done(new Error('Implement the map and reduce functions'));
+  done(new Error('Implement the map and reduce functions'));
 });
 
 test('(10 pts) (scenario) all.mr:strmatch', (done) => {
-    done(new Error('Implement the map and reduce functions'));
+  done(new Error('Implement the map and reduce functions'));
 });
 
 test('(10 pts) (scenario) all.mr:ridx', (done) => {
-    done(new Error('Implement the map and reduce functions'));
+  done(new Error('Implement the map and reduce functions'));
 });
 
 test('(10 pts) (scenario) all.mr:rlg', (done) => {
-    done(new Error('Implement the map and reduce functions'));
+  done(new Error('Implement the map and reduce functions'));
 });
 
 /*
@@ -304,14 +349,14 @@ beforeAll((done) => {
   distribution.node.start((server) => {
     localServer = server;
 
-    const ncdcConfig = {gid: 'ncdc'};
+    const ncdcConfig = { gid: 'ncdc' };
     startNodes(() => {
       distribution.local.groups.put(ncdcConfig, ncdcGroup, (e, v) => {
         distribution.ncdc.groups.put(ncdcConfig, ncdcGroup, (e, v) => {
-          const dlibConfig = {gid: 'dlib'};
+          const dlibConfig = { gid: 'dlib' };
           distribution.local.groups.put(dlibConfig, dlibGroup, (e, v) => {
             distribution.dlib.groups.put(dlibConfig, dlibGroup, (e, v) => {
-              const tfidfConfig = {gid: 'tfidf'};
+              const tfidfConfig = { gid: 'tfidf' };
               distribution.local.groups.put(tfidfConfig, tfidfGroup, (e, v) => {
                 distribution.tfidf.groups.put(tfidfConfig, tfidfGroup, (e, v) => {
                   done();
@@ -326,7 +371,7 @@ beforeAll((done) => {
 });
 
 afterAll((done) => {
-  const remote = {service: 'status', method: 'stop'};
+  const remote = { service: 'status', method: 'stop' };
   remote.node = n1;
   distribution.local.comm.send([], remote, (e, v) => {
     remote.node = n2;

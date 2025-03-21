@@ -33,13 +33,9 @@ function store(config) {
         const remote = { node: distribution.node.config, service: "store", method: "get" };
         global.distribution.local.comm.send([{ key: null, gid: context.gid }], remote, (err, result) => {
           // If no error and result is an array (list of keys), convert it to an object.
-          if (!err && Array.isArray(result)) {
-            const obj = {};
-            result.forEach((r, i) => {
-              obj[i] = r;
-            });
-            // Return an empty object for error and our object as value.
-            callback({}, obj);
+          if (!err) {
+            // Return an empty list for error and our list of result as value.
+            callback({}, result);
           } else {
             callback(err, result);
           }

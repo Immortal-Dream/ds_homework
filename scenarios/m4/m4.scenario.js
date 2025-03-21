@@ -1,7 +1,6 @@
 const distribution = require('../../config.js');
 const util = distribution.util;
 const id = distribution.util.id;
-const 
 
 test('(5 pts) (scenario) use the local store', (done) => {
   /*
@@ -155,8 +154,9 @@ test('(5 pts) (scenario) use mem.reconf', (done) => {
       [{ key: keysAndItems[0].key, gid: 'mygroup' }],
     ];
 
-    // Based on where you think the items should be, send the messages to the right nodes...
-    const remote = { node: '?', service: 'mem', method: 'get' };
+    // Since we removed node2, the only remaining node is the current node.
+    // Therefore, we expect the item to be placed on the current node.
+    const remote = { node: distribution.node.config, service: 'mem', method: 'get' };
     distribution.local.comm.send(messages[0], remote, (e, v) => {
       try {
         expect(e).toBeFalsy();
@@ -166,8 +166,8 @@ test('(5 pts) (scenario) use mem.reconf', (done) => {
         return;
       }
 
-      // Write checks for the rest of the items...
-      done(); // Only call `done()` once all checks are written
+      // Write checks for the rest of the items if needed...
+      done(); // Only call `done()` once all checks are written.
     });
   };
 });

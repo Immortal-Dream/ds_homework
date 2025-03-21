@@ -23,7 +23,6 @@
  * @property {string[]} keys
  */
 
-
 /*
   Note: The only method explicitly exposed in the `mr` service is `exec`.
   Other methods, such as `map`, `shuffle`, and `reduce`, should be dynamically
@@ -41,6 +40,8 @@ function mr(config) {
    * @return {void}
    */
   function exec(configuration, cb) {
+    const cb = callback || function () {};
+
   }
 
   return {exec};
